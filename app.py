@@ -1,68 +1,60 @@
 import streamlit as st
-import pandas as pd
 import os
 import re
 
-# Ruta de carpetas y archivos
-RUTA_MUESTRA = 'muestra_claves/muestra.csv'
-RUTA_COMPLETO = 'completo_claves/completo.csv'
-RUTA_REGISTROS_MUESTRA = 'data/registros_muestra.csv'
-RUTA_REGISTROS_COMPLETO = 'data/registros_completo.csv'
+# Función para cargar claves desde archivos de texto
+def cargar_claves(ruta):
+    if os.path.exists(ruta):
+        with open(ruta, 'r') as archivo:
+            return archivo.read().splitlines()
+    return []
+
+# Cargar listas de claves desde archivos
+claves_muestra = cargar_claves('muestra_claves/muestra.txt')
+claves_completo = cargar_claves('completo_claves/completo.txt')
 
 # Códigos de autorización
 AUTORIZACION_VALIDA = "echosonomovil&%$#"
 
-# Cargar listas de claves
-def cargar_claves(ruta):
-    if not os.path.exists(ruta):
-        return []
-    with open(ruta, 'r') as f:
-        return f.read().splitlines()
+# Inicializar registros en la sesión
+if "registros_muestra" not in st.session_state:
+    st.session_state.registros_muestra = []
 
-claves_muestra = cargar_claves(RUTA_MUESTRA)
-claves_completo = cargar_claves(RUTA_COMPLETO)
+if "registros_completo" not in st.session_state:
+    st.session_state.registros_completo = []
 
 # Indexación de claves
 def siguiente_clave(tipo_examen):
     if tipo_examen == 'Muestra':
-        ruta = RUTA_REGISTROS_MUESTRA
+        registros = st.session_state.registros_muestra
         claves = claves_muestra
     else:
-        ruta = RUTA_REGISTROS_COMPLETO
+        registros = st.session_state.registros_completo
         claves = claves_completo
 
-    df = pd.read_csv(ruta) if os.path.exists(ruta) else pd.DataFrame(columns=['Email'])
-    return claves[len(df) % len(claves)]
+    return claves[len(registros) % len(claves)]
 
-# Validación de email
+# Validación de email y nombre
 def es_email_valido(email):
     return bool(re.match(r"[^@]+@[^@]+\.[^@]+", email))
 
-# Validación de nombre
 def es_nombre_valido(nombre):
     return bool(re.match(r"^[A-Za-z\s]+$", nombre))
 
-# Guardar registros
+# Guardar en sesión
 def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None):
-    if tipo_examen == 'Muestra':
-        archivo = RUTA_REGISTROS_MUESTRA
-    else:
-        archivo = RUTA_REGISTROS_COMPLETO
-    
-    df_nuevo = pd.DataFrame({
-        'Email': [email],
-        'Nombre': [nombre],
-        'ClaveAsignada': [clave],
-        'TipoExamen': [tipo_examen]
-    })
+    registro = {
+        'Email': email,
+        'Nombre': nombre,
+        'ClaveAsignada': clave,
+        'TipoExamen': tipo_examen
+    }
     
     if tipo_examen == 'Completo':
-        df_nuevo['CodigoAutorizacion'] = [codigo_autorizacion]
-    
-    if not os.path.exists(archivo):
-        df_nuevo.to_csv(archivo, index=False)
+        registro['CodigoAutorizacion'] = codigo_autorizacion
+        st.session_state.registros_completo.append(registro)
     else:
-        df_nuevo.to_csv(archivo, mode='a', header=False, index=False)
+        st.session_state.registros_muestra.append(registro)
 
 # Interfaz principal
 st.sidebar.title("ARDMS TOKEN")
@@ -106,25 +98,17 @@ if st.sidebar.button("Acceder"):
 
 if st.session_state.access_granted:
     with st.sidebar.expander("ChronoShift Admi"):
-        try:
-            registros_muestra = pd.read_csv(RUTA_REGISTROS_MUESTRA)
-            st.write("Registros Muestra")
-            st.dataframe(registros_muestra)
+        st.write("Registros Muestra")
+        st.dataframe(st.session_state.registros_muestra)
 
-            registros_completo = pd.read_csv(RUTA_REGISTROS_COMPLETO)
-            st.write("Registros Completo")
-            st.dataframe(registros_completo)
-
-        except pd.errors.EmptyDataError:
-            st.sidebar.error("No hay registros disponibles.")
+        st.write("Registros Completo")
+        st.dataframe(st.session_state.registros_completo)
 
         if st.button("Borrar registros"):
-            if os.path.exists(RUTA_REGISTROS_MUESTRA):
-                os.remove(RUTA_REGISTROS_MUESTRA)
-            if os.path.exists(RUTA_REGISTROS_COMPLETO):
-                os.remove(RUTA_REGISTROS_COMPLETO)
+            st.session_state.registros_muestra.clear()
+            st.session_state.registros_completo.clear()
             st.success("Se han borrado todos los registros.")
             st.experimental_rerun()
 
 # Leyenda
-st.warning("Cada correo queda registrado para el uso del sistema. Cada clave tiene registro de su utilización.")
+st.warning("Cada correo queda registrado para el uso del sistema, así como la IP. Monitoreamos el uso para prevenir abusos.")
