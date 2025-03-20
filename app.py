@@ -111,4 +111,4 @@ if st.session_state.access_granted:
             st.experimental_rerun()
 
 # Leyenda
-st.warning("Cada correo queda registrado para el uso del sistema, así como la IP. Monitoreamos el uso para prevenir abusos.")
+st.warning("Cada correo queda registrado para el uso del sistema. Monitoreamos el uso para prevenir abusos.")
