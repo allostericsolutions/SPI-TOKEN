@@ -58,7 +58,7 @@ def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None
 
 # Interfaz principal
 st.sidebar.title("ARDMS TOKEN")
-st.title("🔐 Generación de Claves")
+st.title("🔐 ADRMS SPI")
 
 email_usuario = st.text_input("Introduce tu correo electrónico:")
 nombre_usuario = st.text_input("Introduce tu nombre completo:")
