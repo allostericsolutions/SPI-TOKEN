@@ -2,6 +2,21 @@ import streamlit as st
 import os
 import re
 
+# CSS para imagen de fondo en la barra lateral
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background-image: url("https://storage.googleapis.com/allostericsolutionsr/Allosteric_Solutions.png");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 64% auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Función para cargar claves desde archivos de texto
 def cargar_claves(ruta):
     if os.path.exists(ruta):
@@ -58,7 +73,7 @@ def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None
 
 # Interfaz principal
 st.sidebar.title("ARDMS TOKEN")
-st.title("🔐 ADRMS SPI")
+st.title("🔐 Generación de Claves")
 
 email_usuario = st.text_input("Introduce tu correo electrónico:")
 nombre_usuario = st.text_input("Introduce tu nombre completo:")
@@ -111,4 +126,4 @@ if st.session_state.access_granted:
             st.experimental_rerun()
 
 # Leyenda
-st.warning("Cada correo queda registrado para el uso del sistema. Monitoreamos el uso para prevenir abusos.")
+st.warning("Cada correo queda registrado, así como la IP para el uso del sistema. Monitoreamos el uso para prevenir abusos.")
