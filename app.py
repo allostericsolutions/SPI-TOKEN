@@ -125,5 +125,11 @@ if st.session_state.access_granted:
             st.success("Se han borrado todos los registros.")
             st.experimental_rerun()
 
+# Botón para acceder al examen
+url_examen = "https://spiardmstest.streamlit.app"
+
+if st.button("Acceder al examen"):
+    st.markdown(f"[Haz clic aquí para ir al examen]({url_examen})", unsafe_allow_html=True)
+
 # Leyenda
 st.warning("Cada correo queda registrado, así como la IP para el uso del sistema. Monitoreamos el uso para prevenir abusos.")
