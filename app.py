@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import re
+import pandas as pd
 
 # CSS para imagen de fondo en la barra lateral
 st.markdown(
@@ -31,12 +32,28 @@ claves_completo = cargar_claves('completo_claves/completo.txt')
 # Códigos de autorización
 AUTORIZACION_VALIDA = "echosonomovil&%$#"
 
+# Cargar registros desde archivos CSV
+def cargar_registros(tipo):
+    archivo = f'registros_{tipo}.csv'
+    if os.path.isfile(archivo):
+        return pd.read_csv(archivo).to_dict(orient='records')
+    return []
+
+# Guardar registros en archivos CSV
+def guardar_registro_csv(tipo, registro):
+    archivo = f'registros_{tipo}.csv'
+    df_nuevo = pd.DataFrame([registro])
+    if not os.path.isfile(archivo):
+        df_nuevo.to_csv(archivo, index=False)
+    else:
+        df_nuevo.to_csv(archivo, mode='a', header=False, index=False)
+
 # Inicializar registros en la sesión
 if "registros_muestra" not in st.session_state:
-    st.session_state.registros_muestra = []
+    st.session_state.registros_muestra = cargar_registros('muestra')
 
 if "registros_completo" not in st.session_state:
-    st.session_state.registros_completo = []
+    st.session_state.registros_completo = cargar_registros('completo')
 
 # Indexación de claves
 def siguiente_clave(tipo_examen):
@@ -56,7 +73,7 @@ def es_email_valido(email):
 def es_nombre_valido(nombre):
     return bool(re.match(r"^[A-Za-z\s]+$", nombre))
 
-# Guardar en sesión
+# Guardar en sesión y archivo
 def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None):
     registro = {
         'Email': email,
@@ -64,12 +81,14 @@ def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None
         'ClaveAsignada': clave,
         'TipoExamen': tipo_examen
     }
-    
+
     if tipo_examen == 'Completo':
         registro['CodigoAutorizacion'] = codigo_autorizacion
         st.session_state.registros_completo.append(registro)
+        guardar_registro_csv('completo', registro)
     else:
         st.session_state.registros_muestra.append(registro)
+        guardar_registro_csv('muestra', registro)
 
 # Interfaz principal
 st.sidebar.title("ARDMS TOKEN")
@@ -120,6 +139,8 @@ if st.session_state.access_granted:
         st.dataframe(st.session_state.registros_completo)
 
         if st.button("Borrar registros"):
+            os.remove('registros_muestra.csv') if os.path.exists('registros_muestra.csv') else None
+            os.remove('registros_completo.csv') if os.path.exists('registros_completo.csv') else None
             st.session_state.registros_muestra.clear()
             st.session_state.registros_completo.clear()
             st.success("Se han borrado todos los registros.")
