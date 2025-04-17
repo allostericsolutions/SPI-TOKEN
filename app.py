@@ -30,7 +30,7 @@ claves_muestra = cargar_claves('muestra_claves/muestra.txt')
 claves_completo = cargar_claves('completo_claves/completo.txt')
 
 # Códigos de autorización
-AUTORIZACION_VALIDA = "echosonomovil&%$#"
+AUTORIZACION_VALIDA = "echosonomovil&%$="
 
 # Cargar registros desde archivos CSV
 def cargar_registros(tipo):
