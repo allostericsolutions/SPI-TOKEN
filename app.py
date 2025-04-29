@@ -108,7 +108,7 @@ if st.button("Generar clave"):
         else:
             clave_asignada = siguiente_clave(tipo_examen.split()[1])
             guardar_registro(email_usuario, nombre_usuario, clave_asignada, tipo_examen.split()[1], codigo_autorizacion if tipo_examen == "Examen Completo" else None)
-            st.success("Tu clave asignada es:")
+            st.success("Tu clave asignada (la copias y la colocas en el examen):")
             st.code(clave_asignada)
     else:
         st.warning("Por favor, introduce un correo y nombre válidos.")
