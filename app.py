@@ -18,6 +18,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Código de autorización
+AUTORIZACION_VALIDA = "echosonomovil&%$3331"
+
 # Función para cargar claves desde archivos de texto
 def cargar_claves(ruta):
     if os.path.exists(ruta):
@@ -28,9 +31,6 @@ def cargar_claves(ruta):
 # Cargar listas de claves desde archivos
 claves_muestra = cargar_claves('muestra_claves/muestra.txt')
 claves_completo = cargar_claves('completo_claves/completo.txt')
-
-# Códigos de autorización
-AUTORIZACION_VALIDA = "echosonomovil&%$3331"
 
 # Cargar registros desde archivos CSV
 def cargar_registros(tipo):
@@ -130,8 +130,13 @@ if st.sidebar.button("Acceder"):
     else:
         st.sidebar.error("🛑 Buen intento, aquí no, es allá ➡")
 
+# Mostrar el código de autorización en la barra lateral (solo para admins autenticados)
 if st.session_state.access_granted:
-    with st.sidebar.expander("ChronoShift Admi"):
+    with st.sidebar.expander("View Authorization Code"):
+        st.write("Current Authorization Code:")
+        st.code(AUTORIZACION_VALIDA)  # Código visible solo para administradores
+
+    with st.sidebar.expander("ChronoShift Admin"):
         st.write("Registros Muestra")
         st.dataframe(st.session_state.registros_muestra)
 
