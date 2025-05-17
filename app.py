@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import re
 import pandas as pd
-import secrets  # Importa la biblioteca secrets para generar claves seguras
 
 # CSS para imagen de fondo en la barra lateral
 st.markdown(
@@ -19,8 +18,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Inicializa la clave de autorización (se cambiará dinámicamente)
-AUTORIZACION_VALIDA = "echosonomovilruvs"
+# Código de autorización
+AUTORIZACION_VALIDA = "echosonomovil#$132"
 
 # Función para cargar claves desde archivos de texto
 def cargar_claves(ruta):
@@ -91,10 +90,6 @@ def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None
         st.session_state.registros_muestra.append(registro)
         guardar_registro_csv('muestra', registro)
 
-# Función para generar una nueva clave de autorización
-def generar_nueva_clave():
-    return secrets.token_urlsafe(16)  # Genera una cadena aleatoria segura de 16 bytes
-
 # Interfaz principal
 st.sidebar.title("ARDMS TOKEN")
 st.title("🔐 Token SPI ARDMS")
@@ -108,21 +103,11 @@ if tipo_examen == "Examen Completo":
 
 if st.button("Generar clave"):
     if es_email_valido(email_usuario) and es_nombre_valido(nombre_usuario):
-        if tipo_examen == "Examen Completo":
-            if codigo_autorizacion != AUTORIZACION_VALIDA:
-                st.warning("Código de autorización inválido.")
-            else:
-                clave_asignada = siguiente_clave(tipo_examen.split()[1])
-                guardar_registro(email_usuario, nombre_usuario, clave_asignada, tipo_examen.split()[1], codigo_autorizacion)
-
-                # Genera una nueva clave de autorización
-                AUTORIZACION_VALIDA = generar_nueva_clave()
-
-                st.success("Tu clave asignada (la copias y la colocas en el examen):")
-                st.code(clave_asignada)
+        if tipo_examen == "Examen Completo" and codigo_autorizacion != AUTORIZACION_VALIDA:
+            st.warning("Código de autorización inválido.")
         else:
             clave_asignada = siguiente_clave(tipo_examen.split()[1])
-            guardar_registro(email_usuario, nombre_usuario, clave_asignada, tipo_examen.split()[1])
+            guardar_registro(email_usuario, nombre_usuario, clave_asignada, tipo_examen.split()[1], codigo_autorizacion if tipo_examen == "Examen Completo" else None)
             st.success("Tu clave asignada (la copias y la colocas en el examen):")
             st.code(clave_asignada)
     else:
