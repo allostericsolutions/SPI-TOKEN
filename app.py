@@ -19,7 +19,7 @@ st.markdown(
 )
 
 # Código de autorización
-AUTORIZACION_VALIDA = "echosonomovil#$132"
+AUTORIZACION_VALIDA = "echosonomovil#y#27"
 
 # Función para cargar claves desde archivos de texto
 def cargar_claves(ruta):
