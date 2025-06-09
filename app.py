@@ -18,28 +18,45 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Código de autorización
-AUTORIZACION_VALIDA = "echosonomoviltestnuricia"
+# ===============================
+# Títulos y Configuración General
+# ===============================
+st.sidebar.title("ARDMS SIMULATORS")
+st.title("🔐 Token ARDMS SIMULATORS")
 
+# ===============================
+# Códigos de Autorización (cada examen con su código)
+# ===============================
+AUTORIZACION_VALIDA_SPI = "echosonomoviltestnuricia"
+AUTORIZACION_VALIDA_RVT = "rvt_authorization_code"  # Coloca el código que corresponda para RVT
+
+# ===============================
 # Función para cargar claves desde archivos de texto
+# ===============================
 def cargar_claves(ruta):
     if os.path.exists(ruta):
         with open(ruta, 'r') as archivo:
             return archivo.read().splitlines()
     return []
 
-# Cargar listas de claves desde archivos
-claves_muestra = cargar_claves('muestra_claves/muestra.txt')
-claves_completo = cargar_claves('completo_claves/completo.txt')
+# ===============================
+# Cargar claves para cada examen y modalidad
+# SPI:
+claves_muestra_SPI   = cargar_claves('muestra_claves/muestra.txt')
+claves_completo_SPI  = cargar_claves('completo_claves/completo.txt')
+# RVT:
+claves_muestra_RVT   = cargar_claves('RVT_muestra_claves.txt')
+claves_completo_RVT  = cargar_claves('RVT_completo_claves.txt')
 
-# Cargar registros desde archivos CSV
+# ===============================
+# Funciones para cargar y guardar registros en CSV
+# ===============================
 def cargar_registros(tipo):
     archivo = f'registros_{tipo}.csv'
     if os.path.isfile(archivo):
         return pd.read_csv(archivo).to_dict(orient='records')
     return []
 
-# Guardar registros en archivos CSV
 def guardar_registro_csv(tipo, registro):
     archivo = f'registros_{tipo}.csv'
     df_nuevo = pd.DataFrame([registro])
@@ -48,76 +65,130 @@ def guardar_registro_csv(tipo, registro):
     else:
         df_nuevo.to_csv(archivo, mode='a', header=False, index=False)
 
-# Inicializar registros en la sesión
-if "registros_muestra" not in st.session_state:
-    st.session_state.registros_muestra = cargar_registros('muestra')
+# ===============================
+# Inicializar registros en la sesión (por examen y modalidad)
+# SPI:
+if "registros_muestra_SPI" not in st.session_state:
+    st.session_state.registros_muestra_SPI = cargar_registros('muestra_SPI')
+if "registros_completo_SPI" not in st.session_state:
+    st.session_state.registros_completo_SPI = cargar_registros('completo_SPI')
+# RVT:
+if "registros_muestra_RVT" not in st.session_state:
+    st.session_state.registros_muestra_RVT = cargar_registros('muestra_RVT')
+if "registros_completo_RVT" not in st.session_state:
+    st.session_state.registros_completo_RVT = cargar_registros('completo_RVT')
 
-if "registros_completo" not in st.session_state:
-    st.session_state.registros_completo = cargar_registros('completo')
-
-# Indexación de claves
-def siguiente_clave(tipo_examen):
-    if tipo_examen == 'Muestra':
-        registros = st.session_state.registros_muestra
-        claves = claves_muestra
+# ===============================
+# Función para indexar la siguiente clave según examen y modalidad
+# ===============================
+def siguiente_clave(examen, modo):
+    if examen == 'SPI':
+        if modo == 'Muestra':
+            registros = st.session_state.registros_muestra_SPI
+            claves = claves_muestra_SPI
+        else:  # Completo
+            registros = st.session_state.registros_completo_SPI
+            claves = claves_completo_SPI
+    elif examen == 'RVT':
+        if modo == 'Muestra':
+            registros = st.session_state.registros_muestra_RVT
+            claves = claves_muestra_RVT
+        else:
+            registros = st.session_state.registros_completo_RVT
+            claves = claves_completo_RVT
     else:
-        registros = st.session_state.registros_completo
-        claves = claves_completo
+        registros = []
+        claves = []
+    return claves[len(registros) % len(claves)] if claves else "No hay claves disponibles"
 
-    return claves[len(registros) % len(claves)]
-
-# Validación de email y nombre
+# ===============================
+# Funciones de Validación
+# ===============================
 def es_email_valido(email):
     return bool(re.match(r"[^@]+@[^@]+\.[^@]+", email))
 
 def es_nombre_valido(nombre):
     return bool(re.match(r"^[A-Za-z\s]+$", nombre))
 
-# Guardar en sesión y archivo
-def guardar_registro(email, nombre, clave, tipo_examen, codigo_autorizacion=None):
+# ===============================
+# Función para guardar registros (almacena de forma independiente según examen y modalidad)
+# ===============================
+def guardar_registro(email, nombre, clave, examen, modo, codigo_autorizacion=None):
     registro = {
         'Email': email,
         'Nombre': nombre,
         'ClaveAsignada': clave,
-        'TipoExamen': tipo_examen
+        'Examen': examen,
+        'Modo': modo
     }
-
-    if tipo_examen == 'Completo':
+    if modo == 'Completo':
         registro['CodigoAutorizacion'] = codigo_autorizacion
-        st.session_state.registros_completo.append(registro)
-        guardar_registro_csv('completo', registro)
+        if examen == 'SPI':
+            st.session_state.registros_completo_SPI.append(registro)
+            guardar_registro_csv('completo_SPI', registro)
+        else:  # RVT
+            st.session_state.registros_completo_RVT.append(registro)
+            guardar_registro_csv('completo_RVT', registro)
     else:
-        st.session_state.registros_muestra.append(registro)
-        guardar_registro_csv('muestra', registro)
+        if examen == 'SPI':
+            st.session_state.registros_muestra_SPI.append(registro)
+            guardar_registro_csv('muestra_SPI', registro)
+        else:  # RVT
+            st.session_state.registros_muestra_RVT.append(registro)
+            guardar_registro_csv('muestra_RVT', registro)
 
-# Interfaz principal
-st.sidebar.title("ARDMS TOKEN")
-st.title("🔐 Token SPI ARDMS")
+# ===============================
+# Interfaz de Usuario: Selección de Examen y Modalidad
+# ===============================
+# Primer select: elegir el examen
+examen_seleccionado = st.selectbox("Selecciona el examen:", ["SPI", "RVT Practice Exam - ARDMS"])
+# Determinar la marca a usar (para lógica interna)
+examen = "SPI" if examen_seleccionado == "SPI" else "RVT"
 
-email_usuario = st.text_input("Introduce tu correo electrónico:")
+# Segundo select: elegir tipo de examen
+modo = st.selectbox("Selecciona el tipo de examen:", ["Muestra", "Completo"])
+
+# Campos para correo y nombre
+email_usuario  = st.text_input("Introduce tu correo electrónico:")
 nombre_usuario = st.text_input("Introduce tu nombre completo:")
-tipo_examen = st.selectbox("Selecciona el tipo de examen:", ["Examen Muestra", "Examen Completo"])
 
-if tipo_examen == "Examen Completo":
+# Si se selecciona Completo, solicitar código de autorización
+codigo_autorizacion = None
+if modo == "Completo":
     codigo_autorizacion = st.text_input("Introduce el código de autorización:", type="password")
 
+# ===============================
+# Botón para Generar Clave
+# ===============================
 if st.button("Generar clave"):
     if es_email_valido(email_usuario) and es_nombre_valido(nombre_usuario):
-        if tipo_examen == "Examen Completo" and codigo_autorizacion != AUTORIZACION_VALIDA:
-            st.warning("Código de autorización inválido.")
+        if modo == "Completo":
+            # Verificar el código de autorización según examen
+            if examen == "SPI" and codigo_autorizacion != AUTORIZACION_VALIDA_SPI:
+                st.warning("Código de autorización inválido para SPI.")
+            elif examen == "RVT" and codigo_autorizacion != AUTORIZACION_VALIDA_RVT:
+                st.warning("Código de autorización inválido para RVT.")
+            else:
+                clave_asignada = siguiente_clave(examen, modo)
+                guardar_registro(email_usuario, nombre_usuario, clave_asignada, examen, modo, codigo_autorizacion)
+                st.success("Tu clave asignada (la copias y la colocas en el examen):")
+                st.code(clave_asignada)
         else:
-            clave_asignada = siguiente_clave(tipo_examen.split()[1])
-            guardar_registro(email_usuario, nombre_usuario, clave_asignada, tipo_examen.split()[1], codigo_autorizacion if tipo_examen == "Examen Completo" else None)
+            clave_asignada = siguiente_clave(examen, modo)
+            guardar_registro(email_usuario, nombre_usuario, clave_asignada, examen, modo)
             st.success("Tu clave asignada (la copias y la colocas en el examen):")
             st.code(clave_asignada)
     else:
         st.warning("Por favor, introduce un correo y nombre válidos.")
 
-# Barra lateral protegida para admin
+# ===============================
+# Autenticación de Administrador en la Barra Lateral
+# ===============================
 if "access_granted" not in st.session_state:
     st.session_state.access_granted = False
 
 def autenticar_clave(contraseña):
+    # Utilizamos la misma clave administrativa para ambos exámenes
     contraseña_correcta = "francisco14%"
     return contraseña == contraseña_correcta
 
@@ -130,32 +201,47 @@ if st.sidebar.button("Acceder"):
     else:
         st.sidebar.error("🛑 Buen intento, aquí no, es allá ➡")
 
-# Mostrar el código de autorización en la barra lateral (solo para admins autenticados)
 if st.session_state.access_granted:
-    with st.sidebar.expander("View Authorization Code"):
-        st.write("Current Authorization Code:")
-        st.code(AUTORIZACION_VALIDA)  # Código visible solo para administradores
-
+    with st.sidebar.expander("View Authorization Codes"):
+        st.write("SPI Authorization Code:")
+        st.code(AUTORIZACION_VALIDA_SPI)
+        st.write("RVT Authorization Code:")
+        st.code(AUTORIZACION_VALIDA_RVT)
+    
     with st.sidebar.expander("ChronoShift Admin"):
-        st.write("Registros Muestra")
-        st.dataframe(st.session_state.registros_muestra)
-
-        st.write("Registros Completo")
-        st.dataframe(st.session_state.registros_completo)
-
+        st.write("SPI - Registros Muestra")
+        st.dataframe(st.session_state.registros_muestra_SPI)
+        st.write("SPI - Registros Completo")
+        st.dataframe(st.session_state.registros_completo_SPI)
+        st.write("RVT - Registros Muestra")
+        st.dataframe(st.session_state.registros_muestra_RVT)
+        st.write("RVT - Registros Completo")
+        st.dataframe(st.session_state.registros_completo_RVT)
+        
         if st.button("Borrar registros"):
-            os.remove('registros_muestra.csv') if os.path.exists('registros_muestra.csv') else None
-            os.remove('registros_completo.csv') if os.path.exists('registros_completo.csv') else None
-            st.session_state.registros_muestra.clear()
-            st.session_state.registros_completo.clear()
+            # Borrar archivos CSV para ambos exámenes
+            for file in ['registros_muestra_SPI.csv', 'registros_completo_SPI.csv',
+                         'registros_muestra_RVT.csv', 'registros_completo_RVT.csv']:
+                if os.path.exists(file):
+                    os.remove(file)
+            st.session_state.registros_muestra_SPI.clear()
+            st.session_state.registros_completo_SPI.clear()
+            st.session_state.registros_muestra_RVT.clear()
+            st.session_state.registros_completo_RVT.clear()
             st.success("Se han borrado todos los registros.")
             st.experimental_rerun()
 
-# Botón para acceder al examen
-url_examen = "https://spiardmstest.streamlit.app"
+# ===============================
+# Botón para acceder al examen (con enlace y título según la selección)
+# ===============================
+if examen == "SPI":
+    url_examen = "https://spiardmstest.streamlit.app"
+    boton_label = "Acceder al examen SPI"
+else:
+    url_examen = "https://adrmsvascular.streamlit.app/"
+    boton_label = "Acceder al examen RVT"
 
-if st.button("Acceder al examen"):
+if st.button(boton_label):
     st.markdown(f"[Haz clic aquí para ir al examen]({url_examen})", unsafe_allow_html=True)
 
-# Leyenda
 st.warning("Cada correo queda registrado, así como la IP para el uso del sistema. Monitoreamos el uso para prevenir abusos.")
