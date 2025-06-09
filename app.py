@@ -28,7 +28,7 @@ st.title("🔐 Token ARDMS SIMULATORS")
 # Códigos de Autorización (cada examen con su código)
 # ===============================
 AUTORIZACION_VALIDA_SPI = "echosonomoviltestnuricia"
-AUTORIZACION_VALIDA_RVT = "rvt_authorization_code"  # Coloca el código que corresponda para RVT
+AUTORIZACION_VALIDA_RVT = "rvttreshpalmrtery&&"  # Coloca el código que corresponda para RVT
 
 # ===============================
 # Función para cargar claves desde archivos de texto
